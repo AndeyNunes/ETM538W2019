@@ -48,7 +48,7 @@ Note: # # # ADD THE SPECIFIC ERROR INFO HERE # # #
 -------
 
 
-# Initial Data Exploration  
+### Initial Data Exploration  
 
 ```{r load data}
 training <- read_csv("projectdata.csv")
@@ -92,7 +92,7 @@ We see there is a perfect correlation between `freq` and `vol`. We note that the
 -------
 
 
-# Model 1: Naive Linear Regression  
+### Model 1: Naive Linear Regression  
 
 Our first model is ordinary linear regression. We chose this model because it's a typical starting point for data analysis, and it's easy to run and interpret. As discussed below, the results did not prove to be useful, but we still consider it a valuable starting point.  
 
@@ -154,7 +154,7 @@ plot(linearmodel_int)
 
 -------
 
-# Model 2: K Nearest Neighbors  
+### Model 2: K Nearest Neighbors  
 
 ```{r knn load, echo=FALSE}
 data <- read.csv("projectdata.csv")
@@ -288,13 +288,14 @@ head(libraryfullresults)
 
 -------
 
-# Model 3: Decision Tree
-
+### Model 3: Decision Tree
+In this section, we first check the strcution of data frame which consist of 576 observation of 6 variables. 
 ```{r}
 dfRawData <- read.csv('projectdata.csv')
 str(dfRawData)
 ```
-# Pre-process data
+## Pre-process data
+In this section, data is cleared and prepared ready for processing.
 ```{r}
 dfModelData <- dfRawData[-1] # Exclude the first column
 dfModelData <- na.omit(dfModelData) # remove any NAs
@@ -302,7 +303,8 @@ colnames(dfModelData) <- c('MonthsSinceLastDonation', 'NumberOfDonations', 'Tota
 dfModelData$MadeDonationInMarch2007 <- as.factor(dfModelData$MadeDonationInMarch2007)
 ```
 
-# Split data into train and test data
+## Split data into train and test data
+In this section, we create the train data and test date. By using p=0.8, it means the data split should be done in 80:20 ratio. And before training decision tree classifier, set.seed().
 ```{r}
 # Split the data into training and test set
 set.seed(123)
@@ -313,7 +315,9 @@ trnData <- dfModelData[trnSamples, ]
 testData <- dfModelData[-trnSamples, ]
 ```
 
-
+##Trained decision tree classifier result.
+We check the result of our train()method by a print dtree_fit variable. It's showing us the accuracy metrics or different values of cp as the following.
+We also used cross validation to divide it into 10 folds.
 ```{r}
 control <- trainControl(method = 'repeatedcv', number = 10, repeats = 5)
 # Train the model
@@ -321,11 +325,13 @@ model_DT <- train(MadeDonationInMarch2007 ~., data = trnData, method = 'rpart', 
 # Estimate variable importantce
 model_DT
 ```
-
+From above, the cp= 0.04337671. We are ready to predict classes for our test set, and use predict()method.
 ```{r}
 prp(model_DT$finalModel, box.palette = "Reds", tweak = 1.2)
 ```
-
+##Confusion Matrix
+The following result shows that the classifier with thre criterion as information gain is giving 0.7193 of accuracy for the test set.
+The prediction accuracy of 0.7193, which means that the percentage that the actual/prefernce result is 0, and the prediction result is 0;  the actual is 1, and that prediction result is 1 is 0.7193. The error rate = 1- accuracy = 0.2807, kappa =0.1817, which means the kappa coefficient is slight.
 ```{r}
 test_pred <- predict(model_DT, newdata = testData)
 confusionMatrix(test_pred, testData$MadeDonationInMarch2007 )  #check accuracy
