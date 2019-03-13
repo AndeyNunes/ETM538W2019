@@ -290,12 +290,15 @@ head(libraryfullresults)
 
 ### Model 3: Decision Tree
 In this section, we first check the strcution of data frame which consist of 576 observation of 6 variables. 
+
 ```{r}
 dfRawData <- read.csv('projectdata.csv')
 str(dfRawData)
 ```
+
 ## Pre-process data
 In this section, data is cleared and prepared ready for processing.
+
 ```{r}
 dfModelData <- dfRawData[-1] # Exclude the first column
 dfModelData <- na.omit(dfModelData) # remove any NAs
@@ -305,6 +308,7 @@ dfModelData$MadeDonationInMarch2007 <- as.factor(dfModelData$MadeDonationInMarch
 
 ## Split data into train and test data
 In this section, we create the train data and test date. By using p=0.8, it means the data split should be done in 80:20 ratio. And before training decision tree classifier, set.seed().
+
 ```{r}
 # Split the data into training and test set
 set.seed(123)
@@ -318,6 +322,7 @@ testData <- dfModelData[-trnSamples, ]
 ##Trained decision tree classifier result.
 We check the result of our train()method by a print dtree_fit variable. It's showing us the accuracy metrics or different values of cp as the following.
 We also used cross validation to divide it into 10 folds.
+
 ```{r}
 control <- trainControl(method = 'repeatedcv', number = 10, repeats = 5)
 # Train the model
@@ -325,13 +330,17 @@ model_DT <- train(MadeDonationInMarch2007 ~., data = trnData, method = 'rpart', 
 # Estimate variable importantce
 model_DT
 ```
+
 From above, the cp= 0.04337671. We are ready to predict classes for our test set, and use predict()method.
+
 ```{r}
 prp(model_DT$finalModel, box.palette = "Reds", tweak = 1.2)
 ```
+
 ##Confusion Matrix
 The following result shows that the classifier with thre criterion as information gain is giving 0.7193 of accuracy for the test set.
 The prediction accuracy of 0.7193, which means that the percentage that the actual/prefernce result is 0, and the prediction result is 0;  the actual is 1, and that prediction result is 1 is 0.7193. The error rate = 1- accuracy = 0.2807, kappa =0.1817, which means the kappa coefficient is slight.
+
 ```{r}
 test_pred <- predict(model_DT, newdata = testData)
 confusionMatrix(test_pred, testData$MadeDonationInMarch2007 )  #check accuracy
@@ -417,7 +426,7 @@ Lets see how random forests compared.
 cv_prep_glm <- cv_models_glm %>%
    mutate(validate_actual = map(validate, ~.x$target),
           validate_predicted = map2(.x = glm_model, .y = validate, 
-                                    ~predict(.x, .y, type = "response")))
+                                    ~predict(.x, .y, type = "response") > 0.5))
 ```
 
 
@@ -459,7 +468,7 @@ The average mean absolute error across all logistic regression models was `r mea
 # Generate predictions using the random forest model
 cv_prep_rf <- cv_models_rf %>% 
   mutate(validate_actual = map(validate, ~.x$target),
-         validate_predicted = map2(.x = rf_model, .y = validate, ~predict(.x, .y)$predictions))
+         validate_predicted = map2(.x = rf_model, .y = validate, ~predict(.x, .y, type = "response")$predictions > 0.5))
 ```
 
 
@@ -503,7 +512,7 @@ Now lets evaluate the models using the mean absolute error, accuracy, precision,
 # Generate validate predictions for each model
 cv_prep_tunerf <- cv_model_tunerf %>% 
   mutate(rf_validate_actual = map(validate, ~.x$target),
-     rf_validate_predicted = map2(.x = rf_model, .y = validate, ~predict(.x, .y)$predictions))
+     rf_validate_predicted = map2(.x = rf_model, .y = validate, ~predict(.x, .y, type = "response")$predictions > 0.5))
 
 # Calculate validate MAE for each fold and mtry combination
 cv_eval_tunerf <- cv_prep_tunerf %>% 
@@ -517,10 +526,8 @@ cv_eval_tunerf <- cv_prep_tunerf %>%
          rf_recall = map2_dbl(.x = rf_validate_actual,
                                  .y = rf_validate_predicted,
                                  ~recall(actual = .x, predicted = .y)))
-
-
-
 ```
+
 
 ```{r summarize rf model findings}
 # Calculate the mean validate_mae for each mtry used  
@@ -533,7 +540,7 @@ rf_eval_summary <- cv_eval_tunerf %>%
 kable(rf_eval_summary)
 ```
 
-It looks like we get lowest error rate using mtry 2, but but best recall and accuracy on the mtry 3. Still the mean error rate for any model is much higher than other methods previously, therefore, it will not be used to generate predictions for the DrivenData contest. If we did want to generate the vector of predictions for the test data, here is how we would go about doing that in four steps:
+It looks like we get lowest error rate using mtry 2, but best recall and accuracy on the mtry 3. Still the mean error rate for any model is much higher than other methods previously, therefore, it will not be used to generate predictions for the DrivenData contest. If we did want to generate the vector of predictions for the test data, here is how we would go about doing that in four steps:
 
 1. Select random forest model with the lowest average mae (or other metric).
 
@@ -542,7 +549,7 @@ best <- filter(cv_eval_tunerf, rf_validate_mae == min(cv_eval_tunerf$rf_validate
 kable(tibble(id = best$id, mtry = best$mtry))
 ```
 
-2. Use these parameters to traing our best rf model.
+2. Use these parameters to train our best rf model.
 
 ```{r select best rf model}
 # Build the model using all training data and the best performing parameter
@@ -569,9 +576,9 @@ rf_test_prediction <- cbind(test_data$id, test_predicted)
 ```
 
 
-# Discussion
+# Conclusion
 
-
+The knn model had the best error rate.
 
 
 # References
