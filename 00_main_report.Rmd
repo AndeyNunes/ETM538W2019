@@ -43,7 +43,7 @@ Note: # # # ADD THE SPECIFIC ERROR INFO HERE # # #
 
 -------
 
--------
+KNN Error rate: 10.5% at k=3
 
 -------
 
@@ -270,7 +270,7 @@ error<-c("18.4%", "13.1%", "10.5%", "9.2%" )
 pander(cbind(k,error))
 ```
 
-We note that the error decreases until $k = 3$, then increases when $k = 4$. We want to avoid overfitting, so we choose $k = 3$ nearest neighbors for the analysis. We note that the built-in package has slightly smaller error than our manual work even at $k=1$, and that at $k=3$ the error rate is half of what it was in our original work.
+We want to avoid overfitting, so we choose $k = 3$ nearest neighbors for the analysis. We note that the built-in package has slightly smaller error than our manual work even at $k=1$, and that at $k=3$ the error rate is half of what it was in our original work. Note also that the built-in package decides points with tied votes in their nearest neighbors at random, so you might get slightly different results when rerunning this code.
 
 The data contest (from Data Driven) includes a specific set of test data. Here are our model's predictions against those data points.  
 
