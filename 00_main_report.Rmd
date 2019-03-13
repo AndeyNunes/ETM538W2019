@@ -173,7 +173,7 @@ scaledinstances <- cbind(instances[,1]*weights[1],instances[,2]*weights[2],insta
 We divide our working data into two buckets: one for training, and one for calculating nearest neighbors to assign weights.
 
 ```{r knn bucketize}
-practicebucket <- scaledinstances[501:576,]
+validationbucket <- scaledinstances[501:576,]
 databucket <- scaledinstances[1:500,]
 ```
 
@@ -186,38 +186,38 @@ distance <- function(x,y){
 }
 ```
 
-Here is an example of the distance calculation, working on one of our practice points and one of our data points.  
+Here is an example of the distance calculation, working on one of our validation points and one of our data points.  
 
 ```{r knn example1}
 databucket[1,]
-practicebucket[1,]
-distance(databucket[1,], practicebucket[1,])
+validationbucket[1,]
+distance(databucket[1,], validationbucket[1,])
 ```
 
-We create a table to calculate the distances between each of our practice points and each of the training points. Each column, iterated on $j$, is a practice point. Each row, iterated on $i$, is a data point.  
+We create a table to calculate the distances between each of our validation points and each of the training points. Each column, iterated on $j$, is a validation point. Each row, iterated on $i$, is a data point.  
 
 ```{r knn distancestable}
-distancesbyrow <- data.frame() #length(data) rows iterated by i for data, length(practice) columns iterated by j for practice
+distancesbyrow <- data.frame() #length(data) rows iterated by i for data, length(validation) columns iterated by j for validation
 
 for(i in 1:length(databucket[,1])){
-  for(j in 1:length(practicebucket[,1])){
-    distancesbyrow[i,j]<-distance(databucket[i,],practicebucket[j,])  # calculate the distance between every  possible row and data row, store the results
+  for(j in 1:length(validationbucket[,1])){
+    distancesbyrow[i,j]<-distance(databucket[i,],validationbucket[j,])  # calculate the distance between every  possible row and data row, store the results
   }
 }
 
 head(distancesbyrow[,1:6])
 ```
 
-We create a table to tabulate the results: which point in the data is nearest the $i$th practice point, and what is the value of that point for our `target` variable (whether or not a donation was made). We were concerned about possible cases where multiple points were nearest but that recommended different `target` outcomes.  But no such "ambiguous" values actually appeared in the analysis.  
+We create a table for the results: which point in the data is nearest the $i$th validation point, and what is the value of that point for our `target` variable (whether or not a donation was made). We were concerned about possible cases where multiple points were nearest but that recommended different `target` outcomes.  But no such "ambiguous" values actually appeared in the analysis.  
 
 ```{r knn resultstable}
-distanceresults <- data.frame() #length(practice) rows, one for each test case. first column is minimum distances, second column is occurences of the minimum distance
+distanceresults <- data.frame() #length(validation) rows, one for each test case. first column is minimum distances, second column is occurences of the minimum distance
 
-for(i in 1:length(practicebucket[,1])){ #traversing across our practice data
+for(i in 1:length(validationbucket[,1])){ #traversing across our validation data
   distanceresults[i,1]<-min(distancesbyrow[,i]) #the minimum distance for each column of distancesbyrow
   distanceresults[i,2]<-sum(distanceresults[i,1]==distancesbyrow[,i]) #the number of occurences of this minimum value
   distanceresults[i,3]<-data[which.min(distancesbyrow[,i]),6] ## pulls the "donation" value for the first index which has the minimum value
-  for(j in 1:length(practicebucket[,1])){ ## traversing across the distances for one possible case
+  for(j in 1:length(validationbucket[,1])){ ## traversing across the distances for one possible case
     if(distancesbyrow[j,i]==distanceresults[i,1] & data[j,6]!=distanceresults[i,3]){
      distanceresults[i,3]<-"amb"
     } ## if the distance for this case is minimum AND the playvalue is not equal to the first playvalue stored, rewrite the playvalue to be ambiguous
@@ -246,9 +246,9 @@ Ordinarily, our next step would be to adjust the weight vector and re-run the an
 
 ```{r knn usinglibrary}
 train<-databucket
-test<-practicebucket
+test<-validationbucket
 cl<-data[1:500,6]
-libraryresults<-knn(train, test, cl, k=3, prob=TRUE)
+libraryresults<-knn(train, test, cl, k=4, prob=TRUE)
 libraryresults
 ```
 
@@ -266,7 +266,7 @@ Using the same code, we checked the error rate considering the 1, 2, 3, 4 neares
 
 ```{r knn whichk}
 k<-c(1,2,3,4)
-error<-c("18.4%", "13.1%", "9.2%",  "10.5%")
+error<-c("18.4%", "13.1%", "10.5%", "9.2%" )
 pander(cbind(k,error))
 ```
 
