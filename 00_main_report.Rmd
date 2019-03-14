@@ -36,17 +36,15 @@ Our analysis uses 4 models:
 \item Cross-validation with random forest, which includes another linear regression  
 \end{enumerate}
 
-Using lowest error rate in the predictions as the criterion, we determined that the strongest model is 
+Using lowest error rate in the predictions as the criterion, we determined that the strongest model is the KNN, with error rates as follows:
 
-Note: # # # ADD THE SPECIFIC ERROR INFO HERE # # #  
+KNN Error: 10.5% at k=3
 
+Decision Tree Error: 28.1%
 
--------
+Cross-Validation Logistic Regression Error: 23.8%
 
-KNN Error rate: 10.5% at k=3
-
--------
-
+Cross-Validation Random Forest: 21.7%
 
 ### Initial Data Exploration  
 
@@ -118,7 +116,7 @@ As noted above, `vol` is a linear multiple of `freq`.  Including both would caus
 We create and inspect the linear model.  
 
 ```{r linearmodel}
-linearmodel <- lm(target ~ recency + freq + time, data=data)
+linearmodel <- lm(target ~ recency + freq + time, data=training)
 summary(linearmodel)
 ```
 
@@ -143,7 +141,7 @@ Note: This model does not include interactions between the input variables, but 
 # a version of the linear model that includes interaction between the input variables
 # there was no significant difference between the models, so this one is omitted
 
-linearmodel_int <- lm(target ~ recency * freq * time - recency:time, data=data)
+linearmodel_int <- lm(target ~ recency * freq * time - recency:time, data=training)
 summary(linearmodel_int)
 
 step(linearmodel_int)
@@ -248,7 +246,7 @@ Ordinarily, our next step would be to adjust the weight vector and re-run the an
 train<-databucket
 test<-validationbucket
 cl<-data[1:500,6]
-libraryresults<-knn(train, test, cl, k=4, prob=TRUE)
+libraryresults<-knn(train, test, cl, k=3, prob=TRUE)
 libraryresults
 ```
 
@@ -431,11 +429,11 @@ cv_prep_glm <- cv_models_glm %>%
 
 
 ```{r glm eval}
-# the function mae() is from library(Metrics)
-# Calculate the mean absolute error for each validate fold 
-cv_eval_glm <- cv_prep_glm %>% 
-  mutate(validate_mae = map2_dbl(.x = validate_actual, 
-                                 .y = validate_predicted, 
+#the function mae() is from library(Metrics)
+#Calculate the mean absolute error for each validate fold
+cv_eval_glm <- cv_prep_glm %>%
+  mutate(validate_mae = map2_dbl(.x = validate_actual,
+                                 .y = validate_predicted,
                                  ~mae(actual = .x, predicted = .y)),
          glm_accuracy = map2_dbl(.x = validate_actual,
                                  .y = validate_predicted,
@@ -569,7 +567,7 @@ test <- select(test_data,-id, -vol)
 
 4. Generate prediction vector
 
-```{r predict test data vector}
+```{r predict test data vector, eval=FALSE}
 test_predicted <- predict(best_model, test)$predictions
 rf_test_prediction <- cbind(test_data$id, test_predicted)
 
